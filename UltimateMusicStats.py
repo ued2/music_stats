@@ -20,39 +20,41 @@ s_csv_file = open('Spotify.csv','w')
 s_csv_writer = csv.writer(s_csv_file)
 s_csv_writer.writerow(['Rank','Artist','Song','Streams'])
 
-#url link for apple music
-a_link = 'https://music.apple.com/us/playlist/top-100-usa/pl.606afcbb70264d2eb2b51d8dbcfa6a12'
-#url link for billboard 
-b_link = 'https://www.billboard.com/charts/hot-100'
-#url link for spotify
-s_link = 'https://spotifycharts.com/regional/us/daily/latest'
+#url link for apple music,billboard,spotify
 
-#query the apple music website and return the html 
-a_page = requests.get(a_link).text
-#query the billboard website and return the html 
-b_page = requests.get(b_link).text
-#query the spotify website and return the html 
-s_page = requests.get(s_link).text
+link = {
+	'applemusic': ('https://music.apple.com/us/playlist/top-100-usa/pl.606afcbb70264d2eb2b51d8dbcfa6a12'),
+	'billboard' : ('https://www.billboard.com/charts/hot-100'),
+	'spotify': ('https://spotifycharts.com/regional/us/daily/latest') 
+}
 
-#convert apple music website to beautifulSoup
-a_soup = BeautifulSoup(a_page, 'html.parser')
-#convert billboard website to beautifulSoup
-b_soup = BeautifulSoup(b_page, 'html.parser')
-#convert spotify website to beautifulSoup
-s_soup = BeautifulSoup(s_page, 'html.parser')
+#query the apple music,billboard & spotify website and return the html 
+page = {
+	'applemusic': (requests.get(link['applemusic']).text),
+	'billboard' : (requests.get(link['billboard']).text),
+	'spotify': (requests.get(link['spotify']).text) 
+}
 
-#apple music list 
-a_list = a_soup.find(class_='product-hero__tracks')
-#billboard list 
-b_list = b_soup.find(class_='chart-list__elements')
-#spotify music list 
-s_list = s_soup.find(class_='chart-table')
+
+#convert apple music,billboard,spotify website to beautifulSoup
+soup = {
+	'applemusic': (BeautifulSoup(page['applemusic'], 'html.parser')),
+	'billboard': (BeautifulSoup(page['billboard'], 'html.parser')),
+	'spotify': (BeautifulSoup(page['spotify'], 'html.parser'))
+}
+
+#apple music,billboard,spotify list 
+List = {
+	'applemusic': (soup['applemusic'].find(class_='product-hero__tracks')),
+	'billboard': (soup['billboard'].find(class_='chart-list__elements')),
+	'spotify': (soup['spotify'].find(class_='chart-table'))
+} 
 
 #timer for apple music code 
 a_then = time.time()
 
 #all apple music artist names
-a_all_artist = a_list.find_all(class_='table__row__link table__row__link--secondary')
+a_all_artist = List['applemusic'].find_all(class_='table__row__link table__row__link--secondary')
 a_artist_list = []
 
 #putting apple music artist in a list 
@@ -60,7 +62,7 @@ for artist in a_all_artist:
 	a_artist_list.append(artist.text.strip())
 
 #all apple music song names
-a_all_song = a_list.find_all(class_='we-truncate we-truncate--single-line ember-view tracklist-item__text__headline targeted-link__target')
+a_all_song = List['applemusic'].find_all(class_='we-truncate we-truncate--single-line ember-view tracklist-item__text__headline targeted-link__target')
 a_song_list = []
 
 #putting apple music song in a list 
@@ -94,11 +96,11 @@ print('--------------------------------------------------------------------')
 b_then = time.time()
 
 #all billboard artist names
-b_all_artist = b_list.find_all(class_='chart-element__information__artist text--truncate color--secondary')
+b_all_artist = List['billboard'].find_all(class_='chart-element__information__artist text--truncate color--secondary')
 b_artist_list = []
 
 #all billboard song names
-b_all_song = b_list.find_all(class_='chart-element__information__song text--truncate color--primary')
+b_all_song = List['billboard'].find_all(class_='chart-element__information__song text--truncate color--primary')
 b_song_list = []
 
 #putting billboard artist in a list 
@@ -136,7 +138,7 @@ print('------------------------------------------------------------------------'
 s_then = time.time()
 
 #all spotify artist names
-s_all_artist = s_list.find_all('span')
+s_all_artist = List['spotify'].find_all('span')
 s_intial_artist_list = []
 s_update_artist_list = []
 
@@ -151,7 +153,7 @@ for new_artist in s_intial_artist_list:
 	
 
 #all spotfiy song names
-s_all_song = s_list.find_all('strong')
+s_all_song = List['spotify'].find_all('strong')
 s_song_list = []
 
 #putting spotify song in a list 
@@ -159,7 +161,7 @@ for song in s_all_song:
  	s_song_list.append(song.text.strip())
 
 #all spotify stream numbers
-s_all_streams = s_list.find_all(class_='chart-table-streams')
+s_all_streams = List['spotify'].find_all(class_='chart-table-streams')
 s_streams_list = []
 
 #putting spotify streams in a list 
