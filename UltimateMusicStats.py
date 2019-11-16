@@ -8,31 +8,31 @@ then = time.time()
 #creating csv file for Apple Music List
 a_csv_file = open('AppleMusic.csv','w')
 a_csv_writer = csv.writer(a_csv_file)
-a_csv_writer.writerow(['Rank','Artist','Song'])
+#a_csv_writer.writerow(['Rank','Artist','Song'])
 
 #creating csv file for Billboard List
 b_csv_file = open('BillboardTop100.csv','w')
 b_csv_writer = csv.writer(b_csv_file)
-b_csv_writer.writerow(['Rank','Artist','Song'])
+#b_csv_writer.writerow(['Rank','Artist','Song'])
 
 #creating csv file for Spotify List
 s_csv_file = open('Spotify.csv','w')
 s_csv_writer = csv.writer(s_csv_file)
-s_csv_writer.writerow(['Rank','Artist','Song','Streams'])
+#s_csv_writer.writerow(['Rank','Artist','Song','Streams'])
 
 #url link for apple music,billboard,spotify
 
 link = {
-	'applemusic': ('https://music.apple.com/us/playlist/top-100-usa/pl.606afcbb70264d2eb2b51d8dbcfa6a12'),
+	'applemusic': ('https://kworb.net/charts/apple_s/us.html'),
 	'billboard' : ('https://www.billboard.com/charts/hot-100'),
-	'spotify': ('https://spotifycharts.com/regional/us/daily/latest') 
+	'spotify': ('https://spotifycharts.com/regional/us/daily/latest'), 
 }
 
 #query the apple music,billboard & spotify website and return the html 
 page = {
 	'applemusic': (requests.get(link['applemusic']).text),
 	'billboard' : (requests.get(link['billboard']).text),
-	'spotify': (requests.get(link['spotify']).text) 
+	'spotify': (requests.get(link['spotify']).text),
 }
 
 
@@ -40,38 +40,40 @@ page = {
 soup = {
 	'applemusic': (BeautifulSoup(page['applemusic'], 'html.parser')),
 	'billboard': (BeautifulSoup(page['billboard'], 'html.parser')),
-	'spotify': (BeautifulSoup(page['spotify'], 'html.parser'))
+	'spotify': (BeautifulSoup(page['spotify'], 'html.parser')),
 }
 
 #apple music,billboard,spotify list 
 List = {
-	'applemusic': (soup['applemusic'].find(class_='product-hero__tracks')),
+	'applemusic': (soup['applemusic'].find('tbody')),
 	'billboard': (soup['billboard'].find(class_='chart-list__elements')),
-	'spotify': (soup['spotify'].find(class_='chart-table'))
+	'spotify': (soup['spotify'].find(class_='chart-table')),
 } 
 
 #timer for apple music code 
 a_then = time.time()
 
 #all apple music artist names
-a_all_artist = List['applemusic'].find_all(class_='table__row__link table__row__link--secondary')
+a_all_artist = List['applemusic'].find_all(class_='mp text')
 a_artist_list = []
 
 #putting apple music artist in a list 
 for artist in a_all_artist:
-	a_artist_list.append(artist.text.strip())
+	temp = artist.text.split(' - ')
+	a_artist_list.append(temp[0].strip())
 
 #all apple music song names
-a_all_song = List['applemusic'].find_all(class_='we-truncate we-truncate--single-line ember-view tracklist-item__text__headline targeted-link__target')
+a_all_song = List['applemusic'].find_all(class_='mp text')
 a_song_list = []
 
 #putting apple music song in a list 
 for song in a_all_song:
- 	a_song_list.append(song.text.strip())
+	temp = song.text.split(' - ')
+	a_song_list.append(temp[1].strip())
 
 #putting apple music artist and song into csv file 
 i=0
-while i < 100:
+while i < len(a_artist_list):
 	a_csv_writer.writerow([i+1,a_artist_list[i],a_song_list[i]])
 	i = i + 1
 
