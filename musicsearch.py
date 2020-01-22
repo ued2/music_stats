@@ -1,8 +1,10 @@
 import csv
 import pandas 
+import glob
 
-platform = input('Enter letter of Platform (A)Apple Music (B)Billboard (S)Spotify: ')
-name = input('Enter Artist: ')
+platform = input('Enter letter of Platform (A)Apple Music (B)Billboard (S)Spotify: ').strip()
+
+name = input('Enter Artist: ').strip()
 
 
 if platform == 'A':
@@ -14,7 +16,8 @@ elif platform == 'S':
 
 
 def look(name,platform):
-    print(data[data.artist == str(name.strip())])
-    print(data[data.artist == str(name.strip())][['song']].count())
+    print(data[data.artist == str(name)])
+    print(data[data.artist == str(name)][['song']].count())
+    #print(data.groupby('artist')['song'].count())
 
 look(name,platform)
