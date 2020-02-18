@@ -3,6 +3,7 @@ import requests
 import csv
 import time
 import random
+import pandas 
 
 then = time.time()
 
@@ -72,6 +73,36 @@ def Convert(lst, lst2):
 
 mix = Convert(a_artist_list, a_song_list)
 
+platform = input('Enter letter of Platform (A)Apple Music (B)Billboard (S)Spotify: ')
+
+if platform == 'A':
+    am = pandas.read_csv('AppleMusic.csv',  delimiter=',', names = ['rank', 'artist', 'song'])
+elif platform == 'B':
+    am = pandas.read_csv('BillboardTop100.csv',  delimiter=',', names = ['rank', 'artist', 'song'])
+elif platform == 'S':
+    am = pandas.read_csv('Spotify.csv',  delimiter=',', names = ['rank', 'artist', 'song', 'stream'])
+
+#csv1 = pandas.read_csv('/Desktop/musicstats/AppleMusic.csv')
+
+#print(csv[csv.artist == 'Roddy Ricch'].count())
+
+#print(csv1)
+
+def look(name,platform):
+    print(am[am.artist == str(name.strip())])
+    print(am[am.artist == str(name.strip())][['song']].count())
+    print(am[am.artist == str(name.strip())][['stream']].mean())
+
+
+stop =''
+
+while stop != 'Y':
+    name = input('Enter Artist: ')
+    look(name,platform)
+    
+
+
+stop = raw_input('Would you like to stop (Y)(N): ')
 
 now = time.time()
 
