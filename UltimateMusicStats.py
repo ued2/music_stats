@@ -3,22 +3,33 @@ import requests
 import csv
 import time
 import random
+import psycopg2
+from pymongo import MongoClient
+import dns
+import pandas as pd
+import json
+#import mysql.connector
+from mysql.connector import (connection)
+from mysql.connector import errorcode
+import pandas
+
 
 then = time.time()
 #creating csv file for Apple Music List
-a_csv_file = open('AppleMusic.csv','w')
+a_csv_file = open('csv/AppleMusic.csv','w')
 a_csv_writer = csv.writer(a_csv_file)
-#a_csv_writer.writerow(['Rank','Artist','Song'])
+a_csv_writer.writerow(['Rank','Artist','Song'])
 
 #creating csv file for Billboard List
-b_csv_file = open('BillboardTop100.csv','w')
+b_csv_file = open('csv/BillboardTop100.csv','w')
 b_csv_writer = csv.writer(b_csv_file)
-#b_csv_writer.writerow(['Rank','Artist','Song'])
+b_csv_writer.writerow(['Rank','Artist','Song'])
 
 #creating csv file for Spotify List
-s_csv_file = open('Spotify.csv','w')
+s_csv_file = open('csv/Spotify.csv','w')
 s_csv_writer = csv.writer(s_csv_file)
-#s_csv_writer.writerow(['Rank','Artist','Song','Streams'])
+s_csv_writer.writerow(['Rank','Artist','Song','Streams'])
+
 
 #url link for apple music,billboard,spotify
 
@@ -60,7 +71,7 @@ a_artist_list = []
 #putting apple music artist in a list 
 for artist in a_all_artist:
 	temp = artist.text.split(' - ')
-	a_artist_list.append(temp[0].strip())
+	a_artist_list.append(temp[0].strip().upper())
 
 #all apple music song names
 a_all_song = List['applemusic'].find_all(class_='mp text')
@@ -69,7 +80,7 @@ a_song_list = []
 #putting apple music song in a list 
 for song in a_all_song:
 	temp = song.text.split(' - ')
-	a_song_list.append(temp[1].strip())
+	a_song_list.append(temp[1].strip().title())
 
 #putting apple music artist and song into csv file 
 i=0
@@ -107,16 +118,16 @@ b_song_list = []
 
 #putting billboard artist in a list 
 for artist in b_all_artist:
-	b_artist_list.append(artist.text.strip())
+	b_artist_list.append(artist.text.strip().upper())
 
 #putting billboard song in a list 
 for song in b_all_song:
-	b_song_list.append(song.text.strip())
+	b_song_list.append(song.text.strip().title())
 
 #putting billboard artist and song into csv file 
 i=0
 while i < 100:
-	b_csv_writer.writerow([i+1,b_artist_list[i],b_song_list[i]])
+	b_csv_writer.writerow([i+1,(b_artist_list[i]).strip(),(b_song_list[i]).strip()])
 	i = i + 1
 
 #counting number of times artist appears on billboard list
@@ -151,7 +162,7 @@ for artist in s_all_artist:
 #removing "by" before spotify artist name
 for new_artist in s_intial_artist_list:
 	x = new_artist[2:].strip()
-	s_update_artist_list.append(x)
+	s_update_artist_list.append(x.upper())
 	
 
 #all spotfiy song names
@@ -160,7 +171,7 @@ s_song_list = []
 
 #putting spotify song in a list 
 for song in s_all_song:
- 	s_song_list.append(song.text.strip())
+ 	s_song_list.append(song.text.strip().title())
 
 #all spotify stream numbers
 s_all_streams = List['spotify'].find_all(class_='chart-table-streams')
@@ -168,12 +179,12 @@ s_streams_list = []
 
 #putting spotify streams in a list 
 for streams in s_all_streams:
- 	s_streams_list.append(streams.text.strip())
+ 	s_streams_list.append(streams.text.strip().replace(',', ''))
 
 #putting artist and song into csv file 
 i=0
 while i < len(s_all_song):
-	s_csv_writer.writerow([i+1,s_update_artist_list[i],s_song_list[i],s_streams_list[i+1]])
+	s_csv_writer.writerow([i+1,(s_update_artist_list[i]).strip(),(s_song_list[i]).strip(),s_streams_list[i+1]])
 	i = i + 1
 
 #counting number of times artist appears on list
@@ -195,7 +206,147 @@ print('------------------------------------------------------------------------'
 
 now = time.time()
 
+
 print('Done:'+ str(now-then) + ' seconds')
+
+
+print('--------------------')
+
+#creating csv file for all artist
+ma_csv_file = open('csv/MasterArtist.csv','w')
+ma_csv_writer = csv.writer(ma_csv_file)
+ma_csv_writer.writerow(['id','Artist'])
+
+#creating csv file for all songs
+ms_csv_file = open('csv/MasterSong.csv','w')
+ms_csv_writer = csv.writer(ms_csv_file)
+ms_csv_writer.writerow(['id','Song'])
+
+
+#master_song_list = 
+master_artist_list = a_artist_list + b_artist_list + s_update_artist_list
+master_song_list = a_song_list + b_song_list + s_song_list
+master_song_list = list(dict.fromkeys(master_song_list))
+master_artist_list = list(dict.fromkeys(master_artist_list))
+master_artist_list = sorted(master_artist_list,reverse=False)
+master_song_list = sorted(master_song_list)
+
+#putting artist and song into csv file 
+i=0
+while i < len(master_artist_list):
+	ma_csv_writer.writerow([i+1,master_artist_list[i]])
+	i = i + 1
+
+#putting artist and song into csv file 
+i=0
+while i < len(master_song_list):
+	ms_csv_writer.writerow([i+1,master_song_list[i]])
+	i = i + 1
+
+def applemusic_stuff():
+	link = 'https://itunes.apple.com/search?term=young+thug&entity=musicTrack'
+
+	make_json = requests.get(link).json()
+
+
+
+	print(json.dumps(make_json, indent=3))
+
+def pg_load_table(file_path,table_name):
+
+    SQL_STATEMENT = """
+    COPY %s FROM STDIN WITH
+        CSV
+        HEADER
+        DELIMITER AS ','
+    """
+
+    try:
+        conn = psycopg2.connect(host='127.0.0.1',port='5432',database='music',user='udk',password='Nigerian24')
+        print("Connecting to Database")
+        cur = conn.cursor()
+        f = open(file_path, "r")
+        #truncate aka clear it before loading it
+        cur.execute("Truncate {} Cascade;".format(table_name))
+        print("Truncated {}".format(table_name))
+        cur.copy_expert("copy {} from STDIN CSV HEADER DELIMITER AS ',' ".format(table_name), f)
+        # Load table from the file with header
+        #cur.copy_from(f,str(table_name))
+        conn.commit()
+        print("Loaded data into {}".format(table_name))
+        conn.close()
+        print("DB connection closed.")
+
+    except Exception as e:
+        print("Error: {}".format(str(e)))
+
+#path,table
+#client = pymongo.MongoClient("mongodb+srv://ued2:Nigerian24@music-fcmml.mongodb.net/test?retryWrites=true&w=majority")
+def mysql():
+	try:
+		cnx = connection.MySQLConnection(user='root', password='Nigerian24',
+                              host='127.0.0.1',
+                              database='musicstats')
+
+		cursor = cnx.cursor()
+
+		print(cnx)
+
+		#mysql.connector.connection_cext.CMySQLConnection object at 0x110e50ed0
+
+		print(cursor)
+
+		#CMySQLCursor: (Nothing executed yet)
+
+		cursor.execute("show tables")
+
+		for x in cursor:
+			print(x)
+
+
+		""""
+
+		cur = cnx.cursor()
+
+		csv_data = pandas.read_csv(path)
+
+		#csv_data = csv.reader(file(path), delimeter=',')
+
+		count = 0 
+
+		db = mysql.connector.connect(user='root', password='Nigerian24',host='127.0.0.1')
+
+		for row in csv_data:
+			if count < 1:
+				continue
+			else:
+				cur.execute("INSERT INTO {} (id,name) VALUES (%s, %s)".format(table), row)
+				print(table + '--->'+ count)
+			count +=1
+
+		"""
+
+	except mysql.connector.Error as err:
+		if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+			print("Something is wrong with your user name or password")
+		elif err.errno == errorcode.ER_BAD_DB_ERROR:
+			print("Database does not exist")
+		else:
+			print(err)
+	else:
+		cnx.commit()
+		cnx.close()
+
+
+#applemusic_stuff()
+
+
+#mysql()
+pg_load_table('/Users/udk/Desktop/musicstats/csv/MasterArtist.csv','artist')
+pg_load_table('/Users/udk/Desktop/musicstats/csv/MasterSong.csv','song')
+pg_load_table('/Users/udk/Desktop/musicstats/csv/AppleMusic.csv','applemusic')
+pg_load_table('/Users/udk/Desktop/musicstats/csv/Spotify.csv','spotify')
+pg_load_table('/Users/udk/Desktop/musicstats/csv/BillboardTop100.csv','billboard')
 
 
 
